@@ -11,7 +11,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ title, description, icon }) => {
   return (
     <div className="bg-white dark:bg-card rounded-2xl overflow-hidden shadow-sm border border-border/50 p-6 transition-all duration-300 hover:shadow-md hover:translate-y-[-2px]">
       <div className="flex items-start">
-        <div className="flex-shrink-0 bg-accent rounded-xl p-3 mr-4">
+        <div className="flex-shrink-0 bg-accent rounded-xl p-3 mr-4 text-accent-foreground">
           {icon}
         </div>
         <div>
