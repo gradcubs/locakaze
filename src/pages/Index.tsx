@@ -3,6 +3,7 @@ import React from 'react';
 import Header from '../components/Header';
 import ApplyForm from '../components/ApplyForm';
 import InfoCard from '../components/InfoCard';
+import ProcessingAnimation from '../components/ProcessingAnimation';
 
 const Index = () => {
   return (
@@ -29,6 +30,11 @@ const Index = () => {
             <button className="px-6 py-3 bg-secondary text-foreground rounded-full font-medium hover:bg-secondary/80 transition-colors">
               Learn More
             </button>
+          </div>
+          
+          {/* Processing Animation */}
+          <div className="mb-12 animate-slide-up" style={{ animationDelay: '300ms' }}>
+            <ProcessingAnimation />
           </div>
           
           {/* Stats */}
