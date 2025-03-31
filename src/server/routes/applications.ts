@@ -7,11 +7,11 @@ const router = Router();
 
 // Shortened version for clarity, focusing on the route handlers
 
-router.get('/', (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   res.json(db.applications);
 });
 
-router.get('/:id', (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
   const application = db.applications.find(app => app.id === req.params.id);
   
   if (!application) {
@@ -21,7 +21,7 @@ router.get('/:id', (req: Request, res: Response) => {
   return res.json(application);
 });
 
-router.post('/', (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
   const {
     firstName,
     lastName,
@@ -81,7 +81,7 @@ router.post('/', (req: Request, res: Response) => {
   return res.status(201).json(newApplication);
 });
 
-router.put('/:id/status', (req: Request, res: Response) => {
+router.put('/:id/status', async (req: Request, res: Response) => {
   const { status } = req.body;
   const applicationIndex = db.applications.findIndex(app => app.id === req.params.id);
   

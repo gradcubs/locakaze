@@ -1,9 +1,20 @@
 
-import express from 'express';
-import { getUserByEmail, createUser } from '../services/database';
-import { UserCredentials } from '../types';
+import express, { Request, Response } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+import { db } from '../services/database';
 
 const router = express.Router();
+
+// Helper functions for user operations
+const getUserByEmail = (email: string) => {
+  return db.users.find(user => user.email === email);
+};
+
+const createUser = (userData: { email: string; password: string; firstName: string; lastName: string; role: string }) => {
+  const newUser = { ...userData, id: uuidv4() };
+  db.users.push(newUser);
+  return newUser;
+};
 
 /**
  * @swagger
@@ -54,8 +65,8 @@ const router = express.Router();
  *       401:
  *         description: Invalid credentials
  */
-router.post('/login', (req, res) => {
-  const { email, password } = req.body as UserCredentials;
+router.post('/login', async (req: Request, res: Response) => {
+  const { email, password } = req.body;
   
   // Simple mock authentication
   // In a real app, this would validate password hash against the database
@@ -125,7 +136,7 @@ router.post('/login', (req, res) => {
  *       400:
  *         description: Invalid user data or email already exists
  */
-router.post('/register', (req, res) => {
+router.post('/register', async (req: Request, res: Response) => {
   const { email, password, firstName, lastName, role } = req.body;
   
   // Check if user already exists
@@ -137,7 +148,7 @@ router.post('/register', (req, res) => {
   // In a real app, we would hash the password here
   
   try {
-    const newUser = createUser({ email, firstName, lastName, role });
+    const newUser = createUser({ email, password, firstName, lastName, role });
     
     // Generate a mock token
     const token = Buffer.from(`${newUser.email}:${Date.now()}`).toString('base64');

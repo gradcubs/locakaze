@@ -1,6 +1,6 @@
 
 import express, { Request, Response } from 'express';
-import { getApplicationById, updateApplication } from '../services/database';
+import { db } from '../services/database';
 
 const router = express.Router();
 
@@ -13,8 +13,23 @@ export interface CreditResponse {
   reason?: string;
 }
 
+// Helper function to get application by ID
+const getApplicationById = (id: string) => {
+  return db.applications.find(app => app.id === id);
+};
+
+// Helper function to update application
+const updateApplication = (id: string, updates: Partial<typeof db.applications[0]>) => {
+  const index = db.applications.findIndex(app => app.id === id);
+  if (index !== -1) {
+    db.applications[index] = { ...db.applications[index], ...updates };
+    return db.applications[index];
+  }
+  return null;
+};
+
 // Evaluate credit application
-router.post('/evaluate/:applicationId', (req: Request, res: Response) => {
+router.post('/evaluate/:applicationId', async (req: Request, res: Response) => {
   const application = getApplicationById(req.params.applicationId);
   
   if (!application) {
@@ -74,7 +89,7 @@ router.post('/evaluate/:applicationId', (req: Request, res: Response) => {
 });
 
 // Check status of credit application
-router.get('/check-status/:applicationId', (req: Request, res: Response) => {
+router.get('/check-status/:applicationId', async (req: Request, res: Response) => {
   const application = getApplicationById(req.params.applicationId);
   
   if (!application) {
