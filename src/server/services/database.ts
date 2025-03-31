@@ -1,155 +1,107 @@
 
-import { ApplicationData, UserResponse, ApplicationRequest } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
-// Mock database
-const applications: ApplicationData[] = [
-  {
-    applicationId: '1a2b3c',
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    phone: '(123) 456-7890',
-    dob: '1985-05-15',
-    address: '123 Main St',
-    city: 'New York',
-    state: 'NY',
-    zip: '10001',
-    income: '75000',
-    employment: 'fullTime',
-    creditScore: 'good',
-    loanAmount: '10000',
-    purpose: 'debtConsolidation',
-    status: 'approved',
-    submittedAt: '2023-05-10T14:30:00Z',
-    updatedAt: '2023-05-12T09:15:00Z',
-    creditLimit: '$10,000',
-    interestRate: '12.5% APR',
-    accountNumber: '****-****-****-1234'
-  },
-  {
-    applicationId: '2c3d4e',
-    firstName: 'Jane',
-    lastName: 'Smith',
-    email: 'jane.smith@example.com',
-    phone: '(234) 567-8901',
-    dob: '1990-08-22',
-    address: '456 Oak Ave',
-    city: 'Chicago',
-    state: 'IL',
-    zip: '60601',
-    income: '60000',
-    employment: 'selfEmployed',
-    creditScore: 'fair',
-    loanAmount: '5000',
-    purpose: 'emergency',
-    status: 'processing',
-    submittedAt: '2023-05-15T10:45:00Z',
-    updatedAt: '2023-05-15T11:30:00Z'
-  },
-  {
-    applicationId: '3e4f5g',
-    firstName: 'Robert',
-    lastName: 'Johnson',
-    email: 'robert.johnson@example.com',
-    phone: '(345) 678-9012',
-    dob: '1975-03-30',
-    address: '789 Pine St',
-    city: 'Los Angeles',
-    state: 'CA',
-    zip: '90001',
-    income: '45000',
-    employment: 'partTime',
-    creditScore: 'poor',
-    loanAmount: '3000',
-    purpose: 'medical',
-    status: 'rejected',
-    submittedAt: '2023-05-14T16:20:00Z',
-    updatedAt: '2023-05-16T14:10:00Z'
-  }
-];
-
-const users: UserResponse[] = [
-  {
-    userId: 'usr_123',
-    email: 'employee@example.com',
-    firstName: 'Admin',
-    lastName: 'User',
-    role: 'employee'
-  },
-  {
-    userId: 'usr_456',
-    email: 'john.doe@example.com',
-    firstName: 'John',
-    lastName: 'Doe',
-    role: 'applicant'
-  }
-];
-
-// Database methods
-export const getAllApplications = () => {
-  return [...applications];
-};
-
-export const getApplicationById = (id: string) => {
-  return applications.find(app => app.applicationId === id);
-};
-
-export const getApplicationsByEmail = (email: string) => {
-  return applications.filter(app => app.email === email);
-};
-
-export const createApplication = (data: ApplicationRequest): ApplicationData => {
-  const applicationId = uuidv4();
-  const now = new Date().toISOString();
-  
-  const newApplication: ApplicationData = {
-    applicationId,
-    ...data.personalInfo,
-    ...data.financialInfo,
-    status: 'pending',
-    submittedAt: now,
-    updatedAt: now,
-    verification: data.verification
-  };
-  
-  applications.push(newApplication);
-  return newApplication;
-};
-
-export const updateApplication = (id: string, data: Partial<ApplicationData>): ApplicationData | null => {
-  const index = applications.findIndex(app => app.applicationId === id);
-  
-  if (index === -1) return null;
-  
-  applications[index] = {
-    ...applications[index],
-    ...data,
-    updatedAt: new Date().toISOString()
-  };
-  
-  return applications[index];
-};
-
-export const getUserByEmail = (email: string) => {
-  return users.find(user => user.email === email);
-};
-
-export const createUser = (userData: Partial<UserResponse>): UserResponse => {
-  const newUser: UserResponse = {
-    userId: uuidv4(),
-    email: userData.email || '',
-    firstName: userData.firstName || '',
-    lastName: userData.lastName || '',
-    role: userData.role || 'applicant'
-  };
-  
-  users.push(newUser);
-  return newUser;
-};
-
-// Add missing uuid dependency
-export const installUuid = () => {
-  // This is just a placeholder function to indicate we need to install uuid
-  // The actual installation will be done separately
+// Simulated database with mock applications data
+export const db = {
+  applications: [
+    {
+      id: '1234-abcd-5678-efgh',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john.doe@example.com',
+      phone: '(555) 123-4567',
+      address: '123 Main Street',
+      city: 'Austin',
+      state: 'TX',
+      zipCode: '78701',
+      employmentStatus: 'Full-Time',
+      annualIncome: 85000,
+      loanPurpose: 'Home Improvement',
+      loanAmount: 25000,
+      status: 'pending',
+      createdAt: '2023-05-15T10:30:00.000Z',
+      mlDecision: {
+        status: 'approved',
+        interestRate: 8.75,
+        creditLimit: 30000
+      },
+      creditCheck: {
+        creditScore: 720,
+        inquiries: 2,
+        utilization: 25
+      }
+    },
+    {
+      id: '5678-ijkl-9012-mnop',
+      firstName: 'Jane',
+      lastName: 'Smith',
+      email: 'jane.smith@example.com',
+      phone: '(555) 987-6543',
+      address: '456 Oak Avenue',
+      city: 'Seattle',
+      state: 'WA',
+      zipCode: '98101',
+      employmentStatus: 'Part-Time',
+      annualIncome: 45000,
+      loanPurpose: 'Debt Consolidation',
+      loanAmount: 15000,
+      status: 'approved',
+      createdAt: '2023-05-10T14:45:00.000Z',
+      mlDecision: {
+        status: 'approved',
+        interestRate: 10.25,
+        creditLimit: 18000
+      },
+      creditCheck: {
+        creditScore: 680,
+        inquiries: 3,
+        utilization: 40
+      }
+    },
+    {
+      id: '9012-qrst-3456-uvwx',
+      firstName: 'Robert',
+      lastName: 'Johnson',
+      email: 'robert.johnson@example.com',
+      phone: '(555) 555-5555',
+      address: '789 Pine Street',
+      city: 'Chicago',
+      state: 'IL',
+      zipCode: '60601',
+      employmentStatus: 'Self-Employed',
+      annualIncome: 110000,
+      loanPurpose: 'Business Expansion',
+      loanAmount: 50000,
+      status: 'rejected',
+      createdAt: '2023-05-05T09:15:00.000Z',
+      mlDecision: {
+        status: 'rejected',
+        interestRate: 12.5,
+        creditLimit: 0
+      },
+      creditCheck: {
+        creditScore: 620,
+        inquiries: 7,
+        utilization: 75
+      }
+    }
+  ],
+  users: [
+    {
+      id: uuidv4(),
+      email: 'admin@example.com',
+      password: 'password123',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'employee'
+    },
+    {
+      id: uuidv4(),
+      email: 'user@example.com',
+      password: 'password123',
+      firstName: 'Regular',
+      lastName: 'User',
+      role: 'applicant'
+    }
+  ]
 };
