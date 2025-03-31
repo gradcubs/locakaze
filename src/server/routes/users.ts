@@ -1,165 +1,94 @@
 
-import express, { Request, Response } from 'express';
+import express, { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../services/database';
 
-const router = express.Router();
+const router = Router();
 
-// Helper functions for user operations
+// Helper functions
 const getUserByEmail = (email: string) => {
   return db.users.find(user => user.email === email);
 };
 
-const createUser = (userData: { email: string; password: string; firstName: string; lastName: string; role: string }) => {
-  const newUser = { ...userData, id: uuidv4() };
+const createUser = (userData: Omit<typeof db.users[0], 'id'>) => {
+  const newUser = {
+    id: uuidv4(),
+    ...userData
+  };
   db.users.push(newUser);
   return newUser;
 };
 
-/**
- * @swagger
- * components:
- *   schemas:
- *     UserResponse:
- *       type: object
- *       properties:
- *         userId:
- *           type: string
- *         email:
- *           type: string
- *         firstName:
- *           type: string
- *         lastName:
- *           type: string
- *         role:
- *           type: string
- *           enum: [applicant, employee]
- *         token:
- *           type: string
- */
-
-/**
- * @swagger
- * /api/users/login:
- *   post:
- *     summary: Authenticate user
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       200:
- *         description: Login successful
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/UserResponse'
- *       401:
- *         description: Invalid credentials
- */
+// Login route
 router.post('/login', async (req: Request, res: Response) => {
   const { email, password } = req.body;
   
-  // Simple mock authentication
-  // In a real app, this would validate password hash against the database
-  if (email === 'employee@example.com' && password === 'password123') {
-    const user = getUserByEmail(email) || {
-      userId: 'usr_123',
-      email: 'employee@example.com',
-      firstName: 'Admin',
-      lastName: 'User',
-      role: 'employee'
-    };
-    
-    // Generate a mock token
-    const token = Buffer.from(`${user.email}:${Date.now()}`).toString('base64');
-    
-    res.json({
-      ...user,
-      token
+  if (!email || !password) {
+    return res.status(400).json({ 
+      message: 'Email and password are required' 
     });
-  } else if (email === 'john.doe@example.com' && password === 'password123') {
-    const user = getUserByEmail(email) || {
-      userId: 'usr_456',
-      email: 'john.doe@example.com',
-      firstName: 'John',
-      lastName: 'Doe',
-      role: 'applicant'
-    };
-    
-    // Generate a mock token
-    const token = Buffer.from(`${user.email}:${Date.now()}`).toString('base64');
-    
-    res.json({
-      ...user,
-      token
-    });
-  } else {
-    res.status(401).json({ message: 'Invalid credentials' });
   }
+  
+  const user = getUserByEmail(email);
+  
+  if (!user) {
+    return res.status(401).json({ 
+      message: 'Invalid credentials' 
+    });
+  }
+  
+  // In a real app, we would compare hashed passwords
+  if (user.password !== password) {
+    return res.status(401).json({ 
+      message: 'Invalid credentials' 
+    });
+  }
+  
+  // Remove password from response
+  const { password: _, ...userWithoutPassword } = user;
+  
+  return res.json({
+    message: 'Login successful',
+    user: userWithoutPassword,
+    token: `mock-jwt-token-${user.id}`
+  });
 });
 
-/**
- * @swagger
- * /api/users/register:
- *   post:
- *     summary: Register a new user
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *               firstName:
- *                 type: string
- *               lastName:
- *                 type: string
- *               role:
- *                 type: string
- *     responses:
- *       201:
- *         description: User registered successfully
- *       400:
- *         description: Invalid user data or email already exists
- */
+// Register route
 router.post('/register', async (req: Request, res: Response) => {
-  const { email, password, firstName, lastName, role } = req.body;
+  const { email, password, firstName, lastName, role = 'user' } = req.body;
+  
+  if (!email || !password) {
+    return res.status(400).json({ 
+      message: 'Email and password are required' 
+    });
+  }
   
   // Check if user already exists
   const existingUser = getUserByEmail(email);
+  
   if (existingUser) {
-    return res.status(400).json({ message: 'Email already registered' });
-  }
-  
-  // In a real app, we would hash the password here
-  
-  try {
-    const newUser = createUser({ email, password, firstName, lastName, role });
-    
-    // Generate a mock token
-    const token = Buffer.from(`${newUser.email}:${Date.now()}`).toString('base64');
-    
-    res.status(201).json({
-      ...newUser,
-      token
+    return res.status(409).json({ 
+      message: 'User with this email already exists' 
     });
-  } catch (error) {
-    res.status(400).json({ message: 'Error creating user', error });
   }
+  
+  // Create new user
+  const newUser = createUser({
+    email,
+    password, // In a real app, this would be hashed
+    firstName,
+    lastName,
+    role
+  });
+  
+  // Remove password from response
+  const { password: _, ...userWithoutPassword } = newUser;
+  
+  return res.status(201).json({
+    message: 'Registration successful',
+    user: userWithoutPassword
+  });
 });
 
 export default router;

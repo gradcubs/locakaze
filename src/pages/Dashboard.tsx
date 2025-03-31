@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, DownloadCloud, Filter, UserPlus, RefreshCw, User } from 'lucide-react';
+import { Search, DownloadCloud, Filter, UserPlus, RefreshCw, User, Eye, CheckCircle, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
@@ -14,6 +14,14 @@ import {
   DialogTitle,
   DialogClose
 } from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 // Mock data for line of credit applications
 const mockApplications = [
@@ -105,6 +113,22 @@ const Dashboard: React.FC = () => {
     setIsDialogOpen(true);
   };
 
+  const handleApprove = (id: string) => {
+    console.log(`Approving application ${id}`);
+    const updatedApplications = mockApplications.map(app => 
+      app.id === id ? { ...app, status: 'approved' } : app
+    );
+    alert(`Application ${id} has been approved`);
+  };
+
+  const handleReject = (id: string) => {
+    console.log(`Rejecting application ${id}`);
+    const updatedApplications = mockApplications.map(app => 
+      app.id === id ? { ...app, status: 'rejected' } : app
+    );
+    alert(`Application ${id} has been rejected`);
+  };
+
   const filteredApplications = mockApplications.filter((app) => 
     app.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     app.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -122,6 +146,66 @@ const Dashboard: React.FC = () => {
         return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
     }
   };
+
+  const renderApplicationRow = (application: typeof mockApplications[0]) => (
+    <TableRow key={application.id} className="hover:bg-muted/50">
+      <TableCell>{application.name}</TableCell>
+      <TableCell>{application.email}</TableCell>
+      <TableCell>${application.amount.toLocaleString()}</TableCell>
+      <TableCell>
+        <Badge className={getStatusColor(application.status)} variant="outline">
+          {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+        </Badge>
+      </TableCell>
+      <TableCell>{new Date(application.date).toLocaleDateString()}</TableCell>
+      <TableCell className="text-right">
+        <div className="flex justify-end gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => handleViewUser(application)}
+          >
+            <Eye className="h-4 w-4 mr-1" />
+            View
+          </Button>
+          
+          {application.status === 'pending' && (
+            <>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                onClick={() => handleApprove(application.id)}
+              >
+                <CheckCircle className="h-4 w-4 mr-1" />
+                Approve
+              </Button>
+              
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={() => handleReject(application.id)}
+              >
+                <XCircle className="h-4 w-4 mr-1" />
+                Reject
+              </Button>
+            </>
+          )}
+          
+          <Button 
+            variant="ghost" 
+            size="sm"
+            asChild
+          >
+            <Link to={`/applications/${application.id}`}>
+              Details
+            </Link>
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
 
   return (
     <div className="flex-1 space-y-4 p-6 md:p-8">
@@ -223,42 +307,21 @@ const Dashboard: React.FC = () => {
           <Card>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-4">Name</th>
-                      <th className="text-left p-4">Email</th>
-                      <th className="text-left p-4">Amount</th>
-                      <th className="text-left p-4">Status</th>
-                      <th className="text-left p-4">Date</th>
-                      <th className="text-right p-4">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredApplications.map((application) => (
-                      <tr key={application.id} className="border-b hover:bg-muted/50">
-                        <td className="p-4">{application.name}</td>
-                        <td className="p-4">{application.email}</td>
-                        <td className="p-4">${application.amount.toLocaleString()}</td>
-                        <td className="p-4">
-                          <Badge className={getStatusColor(application.status)} variant="outline">
-                            {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
-                          </Badge>
-                        </td>
-                        <td className="p-4">{new Date(application.date).toLocaleDateString()}</td>
-                        <td className="p-4 text-right">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleViewUser(application)}
-                          >
-                            View
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredApplications.map(renderApplicationRow)}
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>
@@ -268,44 +331,23 @@ const Dashboard: React.FC = () => {
           <Card>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-4">Name</th>
-                      <th className="text-left p-4">Email</th>
-                      <th className="text-left p-4">Amount</th>
-                      <th className="text-left p-4">Status</th>
-                      <th className="text-left p-4">Date</th>
-                      <th className="text-right p-4">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {filteredApplications
                       .filter((app) => app.status === 'approved')
-                      .map((application) => (
-                        <tr key={application.id} className="border-b hover:bg-muted/50">
-                          <td className="p-4">{application.name}</td>
-                          <td className="p-4">{application.email}</td>
-                          <td className="p-4">${application.amount.toLocaleString()}</td>
-                          <td className="p-4">
-                            <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" variant="outline">
-                              Approved
-                            </Badge>
-                          </td>
-                          <td className="p-4">{new Date(application.date).toLocaleDateString()}</td>
-                          <td className="p-4 text-right">
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleViewUser(application)}
-                            >
-                              View
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
+                      .map(renderApplicationRow)}
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>
@@ -315,44 +357,23 @@ const Dashboard: React.FC = () => {
           <Card>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-4">Name</th>
-                      <th className="text-left p-4">Email</th>
-                      <th className="text-left p-4">Amount</th>
-                      <th className="text-left p-4">Status</th>
-                      <th className="text-left p-4">Date</th>
-                      <th className="text-right p-4">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {filteredApplications
                       .filter((app) => app.status === 'pending')
-                      .map((application) => (
-                        <tr key={application.id} className="border-b hover:bg-muted/50">
-                          <td className="p-4">{application.name}</td>
-                          <td className="p-4">{application.email}</td>
-                          <td className="p-4">${application.amount.toLocaleString()}</td>
-                          <td className="p-4">
-                            <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" variant="outline">
-                              Pending
-                            </Badge>
-                          </td>
-                          <td className="p-4">{new Date(application.date).toLocaleDateString()}</td>
-                          <td className="p-4 text-right">
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleViewUser(application)}
-                            >
-                              View
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
+                      .map(renderApplicationRow)}
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>
@@ -362,51 +383,29 @@ const Dashboard: React.FC = () => {
           <Card>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-4">Name</th>
-                      <th className="text-left p-4">Email</th>
-                      <th className="text-left p-4">Amount</th>
-                      <th className="text-left p-4">Status</th>
-                      <th className="text-left p-4">Date</th>
-                      <th className="text-right p-4">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {filteredApplications
                       .filter((app) => app.status === 'rejected')
-                      .map((application) => (
-                        <tr key={application.id} className="border-b hover:bg-muted/50">
-                          <td className="p-4">{application.name}</td>
-                          <td className="p-4">{application.email}</td>
-                          <td className="p-4">${application.amount.toLocaleString()}</td>
-                          <td className="p-4">
-                            <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" variant="outline">
-                              Rejected
-                            </Badge>
-                          </td>
-                          <td className="p-4">{new Date(application.date).toLocaleDateString()}</td>
-                          <td className="p-4 text-right">
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleViewUser(application)}
-                            >
-                              View
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
+                      .map(renderApplicationRow)}
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
-      {/* User Detail Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

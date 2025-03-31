@@ -1,8 +1,8 @@
 
-import express, { Request, Response } from 'express';
+import express, { Router, Request, Response } from 'express';
 import { db } from '../services/database';
 
-const router = express.Router();
+const router = Router();
 
 // Interface for credit response
 export interface CreditResponse {
