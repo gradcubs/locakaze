@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { ApprovalDecisionDialog } from '@/components/ApprovalDecisionDialog';
 import { Application } from '@/services/ApplyFormService';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Static sample application data
 const sampleApplication: Application = {
@@ -31,15 +32,12 @@ const sampleApplication: Application = {
     status: "approved",
     interestRate: 7.5,
     creditLimit: 30000,
-    decisionDate: new Date().toISOString(),
     confidenceScore: 0.85
   },
   creditCheck: {
     creditScore: 720,
     inquiries: 2,
     utilization: 25,
-    delinquencies: 0,
-    publicRecords: 0,
     accountHistory: "Good standing across all accounts"
   }
 };
@@ -121,76 +119,78 @@ const ApplicationDetail = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-6 flex items-center">
+    <div className="container mx-auto p-4 h-screen flex flex-col">
+      <div className="mb-4 flex items-center">
         <Button onClick={handleBack} variant="outline" size="sm" className="mr-4">
           <ArrowLeft className="mr-2 h-4 w-4" /> Back
         </Button>
         <h1 className="text-2xl font-bold">Application Details</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left side - Application Information */}
-        <div className="md:col-span-1">
-          <Card>
-            <CardHeader>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 overflow-hidden">
+        {/* Left side - Application Information with scrolling */}
+        <div className="md:col-span-1 h-full">
+          <Card className="h-full flex flex-col">
+            <CardHeader className="flex-shrink-0">
               <CardTitle>Applicant Information</CardTitle>
               <CardDescription>Details about the applicant</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground mb-1">Application ID</h3>
-                <p className="text-foreground">{application.id}</p>
+            <ScrollArea className="flex-1 px-6">
+              <div className="space-y-4 pr-4 pb-6">
+                <div>
+                  <h3 className="font-medium text-sm text-muted-foreground mb-1">Application ID</h3>
+                  <p className="text-foreground">{application.id}</p>
+                </div>
+                <div>
+                  <h3 className="font-medium text-sm text-muted-foreground mb-1">Full Name</h3>
+                  <p className="text-foreground">{application.firstName} {application.lastName}</p>
+                </div>
+                <div>
+                  <h3 className="font-medium text-sm text-muted-foreground mb-1">Email</h3>
+                  <p className="text-foreground">{application.email}</p>
+                </div>
+                <div>
+                  <h3 className="font-medium text-sm text-muted-foreground mb-1">Phone</h3>
+                  <p className="text-foreground">{application.phone}</p>
+                </div>
+                <Separator />
+                <div>
+                  <h3 className="font-medium text-sm text-muted-foreground mb-1">Address</h3>
+                  <p className="text-foreground">{application.address}</p>
+                  <p className="text-foreground">{application.city}, {application.state} {application.zipCode}</p>
+                </div>
+                <Separator />
+                <div>
+                  <h3 className="font-medium text-sm text-muted-foreground mb-1">Employment Status</h3>
+                  <p className="text-foreground">{application.employmentStatus}</p>
+                </div>
+                <div>
+                  <h3 className="font-medium text-sm text-muted-foreground mb-1">Annual Income</h3>
+                  <p className="text-foreground">${application.annualIncome.toLocaleString()}</p>
+                </div>
+                <div>
+                  <h3 className="font-medium text-sm text-muted-foreground mb-1">Loan Purpose</h3>
+                  <p className="text-foreground">{application.loanPurpose}</p>
+                </div>
+                <div>
+                  <h3 className="font-medium text-sm text-muted-foreground mb-1">Loan Amount</h3>
+                  <p className="text-foreground">${application.loanAmount.toLocaleString()}</p>
+                </div>
+                <div>
+                  <h3 className="font-medium text-sm text-muted-foreground mb-1">Application Date</h3>
+                  <p className="text-foreground">{new Date(application.createdAt).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <h3 className="font-medium text-sm text-muted-foreground mb-1">Current Status</h3>
+                  <div>{getStatusBadge(application.status)}</div>
+                </div>
               </div>
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground mb-1">Full Name</h3>
-                <p className="text-foreground">{application.firstName} {application.lastName}</p>
-              </div>
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground mb-1">Email</h3>
-                <p className="text-foreground">{application.email}</p>
-              </div>
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground mb-1">Phone</h3>
-                <p className="text-foreground">{application.phone}</p>
-              </div>
-              <Separator />
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground mb-1">Address</h3>
-                <p className="text-foreground">{application.address}</p>
-                <p className="text-foreground">{application.city}, {application.state} {application.zipCode}</p>
-              </div>
-              <Separator />
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground mb-1">Employment Status</h3>
-                <p className="text-foreground">{application.employmentStatus}</p>
-              </div>
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground mb-1">Annual Income</h3>
-                <p className="text-foreground">${application.annualIncome.toLocaleString()}</p>
-              </div>
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground mb-1">Loan Purpose</h3>
-                <p className="text-foreground">{application.loanPurpose}</p>
-              </div>
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground mb-1">Loan Amount</h3>
-                <p className="text-foreground">${application.loanAmount.toLocaleString()}</p>
-              </div>
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground mb-1">Application Date</h3>
-                <p className="text-foreground">{new Date(application.createdAt).toLocaleDateString()}</p>
-              </div>
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground mb-1">Current Status</h3>
-                <div>{getStatusBadge(application.status)}</div>
-              </div>
-            </CardContent>
+            </ScrollArea>
           </Card>
         </div>
 
-        {/* Right side - ML Model, Credit Check, Decision */}
-        <div className="md:col-span-2 space-y-6">
+        {/* Right side - ML Model, Credit Check, Decision - scrolls independently */}
+        <div className="md:col-span-2 space-y-6 h-full overflow-y-auto pr-2">
           {/* Machine Learning Model Decision */}
           <Card>
             <CardHeader className="bg-accent/30 rounded-t-lg">
