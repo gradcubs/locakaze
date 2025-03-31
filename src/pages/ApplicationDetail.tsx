@@ -1,46 +1,72 @@
 
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle, XCircle, AlertCircle, CreditCard, Percent, DollarSign, AlertTriangle, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { toast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
+import { toast } from '@/hooks/use-toast';
 import { ApprovalDecisionDialog } from '@/components/ApprovalDecisionDialog';
-import { fetchApplicationById, updateApplicationStatus, Application } from '@/services/ApplyFormService';
+import { Application } from '@/services/ApplyFormService';
+
+// Static sample application data
+const sampleApplication: Application = {
+  id: "APP-12345",
+  firstName: "Jane",
+  lastName: "Smith",
+  email: "jane.smith@example.com",
+  phone: "(555) 123-4567",
+  address: "123 Main Street",
+  city: "San Francisco",
+  state: "California",
+  zipCode: "94105",
+  employmentStatus: "Employed",
+  annualIncome: 85000,
+  loanPurpose: "Home Improvement",
+  loanAmount: 25000,
+  status: "pending",
+  createdAt: new Date().toISOString(),
+  mlDecision: {
+    status: "approved",
+    interestRate: 7.5,
+    creditLimit: 30000,
+    decisionDate: new Date().toISOString(),
+    confidenceScore: 0.85
+  },
+  creditCheck: {
+    creditScore: 720,
+    inquiries: 2,
+    utilization: 25,
+    delinquencies: 0,
+    publicRecords: 0,
+    accountHistory: "Good standing across all accounts"
+  }
+};
 
 const ApplicationDetail = () => {
-  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [application, setApplication] = useState<Application>(sampleApplication);
   
-  const { data: application, isLoading, error, refetch } = useQuery({
-    queryKey: ['application', id],
-    queryFn: () => {
-      if (!id) return null;
-      return fetchApplicationById(id);
-    },
-    enabled: !!id,
-  });
-
   const handleBack = () => {
     navigate('/dashboard');
   };
 
   const handleApprovalConfirm = async () => {
     try {
-      if (!id) return;
-      await updateApplicationStatus(id, 'approved');
+      // Update the status locally for demo purposes
+      setApplication({
+        ...application,
+        status: 'approved'
+      });
+      
       toast({
         title: "Application Approved",
         description: "The application has been successfully approved.",
         variant: "default",
       });
-      refetch();
       setShowApproveDialog(false);
     } catch (error) {
       toast({
@@ -53,14 +79,17 @@ const ApplicationDetail = () => {
 
   const handleRejectionConfirm = async () => {
     try {
-      if (!id) return;
-      await updateApplicationStatus(id, 'rejected');
+      // Update the status locally for demo purposes
+      setApplication({
+        ...application,
+        status: 'rejected'
+      });
+      
       toast({
         title: "Application Rejected",
         description: "The application has been rejected.",
         variant: "default",
       });
-      refetch();
       setShowRejectDialog(false);
     } catch (error) {
       toast({
@@ -70,30 +99,6 @@ const ApplicationDetail = () => {
       });
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="flex justify-center items-center h-64">
-          <div className="text-lg">Loading application details...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !application) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="flex justify-center items-center h-64 flex-col gap-4">
-          <AlertCircle className="h-12 w-12 text-destructive" />
-          <div className="text-lg">Error loading application details</div>
-          <Button onClick={handleBack} variant="outline">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
