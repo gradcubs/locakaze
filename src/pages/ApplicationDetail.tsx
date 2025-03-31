@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { toast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { ApprovalDecisionDialog } from '@/components/ApprovalDecisionDialog';
-import { fetchApplicationById, updateApplicationStatus } from '@/services/ApplyFormService';
+import { fetchApplicationById, updateApplicationStatus, Application } from '@/services/ApplyFormService';
 
 const ApplicationDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,7 +20,10 @@ const ApplicationDetail = () => {
   
   const { data: application, isLoading, error, refetch } = useQuery({
     queryKey: ['application', id],
-    queryFn: () => fetchApplicationById(id || ''),
+    queryFn: () => {
+      if (!id) return null;
+      return fetchApplicationById(id);
+    },
     enabled: !!id,
   });
 
@@ -30,7 +33,8 @@ const ApplicationDetail = () => {
 
   const handleApprovalConfirm = async () => {
     try {
-      await updateApplicationStatus(id || '', 'approved');
+      if (!id) return;
+      await updateApplicationStatus(id, 'approved');
       toast({
         title: "Application Approved",
         description: "The application has been successfully approved.",
@@ -49,7 +53,8 @@ const ApplicationDetail = () => {
 
   const handleRejectionConfirm = async () => {
     try {
-      await updateApplicationStatus(id || '', 'rejected');
+      if (!id) return;
+      await updateApplicationStatus(id, 'rejected');
       toast({
         title: "Application Rejected",
         description: "The application has been rejected.",

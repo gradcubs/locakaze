@@ -1,52 +1,20 @@
 
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { getApplicationById, updateApplication } from '../services/database';
-import { CreditResponse } from '../types';
 
 const router = express.Router();
 
-/**
- * @swagger
- * components:
- *   schemas:
- *     CreditResponse:
- *       type: object
- *       properties:
- *         approved:
- *           type: boolean
- *         creditLimit:
- *           type: string
- *         interestRate:
- *           type: string
- *         accountNumber:
- *           type: string
- *         reason:
- *           type: string
- */
+// Interface for credit response
+export interface CreditResponse {
+  approved: boolean;
+  creditLimit?: string;
+  interestRate?: string;
+  accountNumber?: string;
+  reason?: string;
+}
 
-/**
- * @swagger
- * /api/credit/evaluate/{applicationId}:
- *   post:
- *     summary: Evaluate a credit application
- *     tags: [Credit]
- *     parameters:
- *       - in: path
- *         name: applicationId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Credit evaluation result
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/CreditResponse'
- *       404:
- *         description: Application not found
- */
-router.post('/evaluate/:applicationId', (req, res) => {
+// Evaluate credit application
+router.post('/evaluate/:applicationId', (req: Request, res: Response) => {
   const application = getApplicationById(req.params.applicationId);
   
   if (!application) {
@@ -55,17 +23,9 @@ router.post('/evaluate/:applicationId', (req, res) => {
   
   // Mock credit evaluation logic
   // In a real app, this would involve complex scoring algorithms
-  const creditScoreMap: any = {
-    excellent: 800,
-    good: 720,
-    fair: 650,
-    poor: 600,
-    veryPoor: 550
-  };
-  
-  const score = creditScoreMap[application.creditScore] || 650;
-  const income = parseInt(application.income, 10) || 0;
-  const requestedAmount = parseInt(application.loanAmount, 10) || 0;
+  const score = application.creditCheck?.creditScore || 650;
+  const income = application.annualIncome || 0;
+  const requestedAmount = application.loanAmount || 0;
   
   let result: CreditResponse;
   let newStatus: 'approved' | 'rejected';
@@ -73,26 +33,26 @@ router.post('/evaluate/:applicationId', (req, res) => {
   if (score >= 700 && income >= 50000) {
     // Approve with high limit
     const limit = Math.min(requestedAmount * 1.5, income * 0.2);
-    const rate = 9.99 + (Math.random() * 2).toFixed(2);
+    const rate = 9.99 + (Math.random() * 2);
     const accountNumber = `****-****-****-${Math.floor(1000 + Math.random() * 9000)}`;
     
     result = {
       approved: true,
       creditLimit: `$${limit.toFixed(0)}`,
-      interestRate: `${rate}% APR`,
+      interestRate: `${rate.toFixed(2)}% APR`,
       accountNumber
     };
     newStatus = 'approved';
   } else if (score >= 630 && income >= 30000) {
     // Approve with requested limit
     const limit = Math.min(requestedAmount, income * 0.15);
-    const rate = 12.99 + (Math.random() * 3).toFixed(2);
+    const rate = 12.99 + (Math.random() * 3);
     const accountNumber = `****-****-****-${Math.floor(1000 + Math.random() * 9000)}`;
     
     result = {
       approved: true,
       creditLimit: `$${limit.toFixed(0)}`,
-      interestRate: `${rate}% APR`,
+      interestRate: `${rate.toFixed(2)}% APR`,
       accountNumber
     };
     newStatus = 'approved';
@@ -106,35 +66,15 @@ router.post('/evaluate/:applicationId', (req, res) => {
   }
   
   // Update application in database
-  updateApplication(application.applicationId, {
+  updateApplication(application.id, {
     status: newStatus,
-    creditLimit: result.creditLimit,
-    interestRate: result.interestRate,
-    accountNumber: result.accountNumber
   });
   
   res.json(result);
 });
 
-/**
- * @swagger
- * /api/credit/check-status/{applicationId}:
- *   get:
- *     summary: Check the status of a credit application
- *     tags: [Credit]
- *     parameters:
- *       - in: path
- *         name: applicationId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Application status
- *       404:
- *         description: Application not found
- */
-router.get('/check-status/:applicationId', (req, res) => {
+// Check status of credit application
+router.get('/check-status/:applicationId', (req: Request, res: Response) => {
   const application = getApplicationById(req.params.applicationId);
   
   if (!application) {
@@ -143,16 +83,16 @@ router.get('/check-status/:applicationId', (req, res) => {
   
   const result = application.status === 'approved' ? {
     approved: true,
-    creditLimit: application.creditLimit,
-    interestRate: application.interestRate,
-    accountNumber: application.accountNumber
+    creditLimit: application.mlDecision?.creditLimit.toString(),
+    interestRate: `${application.mlDecision?.interestRate}% APR`,
+    accountNumber: `****-****-****-${Math.floor(1000 + Math.random() * 9000)}`
   } : undefined;
   
   res.json({
-    applicationId: application.applicationId,
+    applicationId: application.id,
     status: application.status,
     message: getStatusMessage(application.status),
-    updatedAt: application.updatedAt,
+    updatedAt: application.createdAt,
     result
   });
 });

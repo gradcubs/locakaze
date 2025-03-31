@@ -2,6 +2,35 @@
 import axios from 'axios';
 import { db } from '../server/services/database';
 
+// Define the application type to ensure type safety
+export interface Application {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  employmentStatus: string;
+  annualIncome: number;
+  loanPurpose: string;
+  loanAmount: number;
+  status: string;
+  createdAt: string;
+  mlDecision?: {
+    status: string;
+    interestRate: number;
+    creditLimit: number;
+  };
+  creditCheck?: {
+    creditScore: number;
+    inquiries: number;
+    utilization: number;
+  };
+}
+
 // Base service URL - would point to real API in production
 const API_URL = '/api';
 
@@ -54,7 +83,7 @@ const api = {
 };
 
 // Application service methods
-export const fetchApplications = async () => {
+export const fetchApplications = async (): Promise<Application[]> => {
   try {
     // This would be a real API call in production
     // const response = await axios.get(`${API_URL}/applications`);
@@ -66,7 +95,7 @@ export const fetchApplications = async () => {
   }
 };
 
-export const fetchApplicationById = async (id: string) => {
+export const fetchApplicationById = async (id: string): Promise<Application | null> => {
   try {
     // This would be a real API call in production
     // const response = await axios.get(`${API_URL}/applications/${id}`);
@@ -78,7 +107,7 @@ export const fetchApplicationById = async (id: string) => {
   }
 };
 
-export const submitApplication = async (formData: any) => {
+export const submitApplication = async (formData: any): Promise<Application> => {
   try {
     // This would be a real API call in production
     // const response = await axios.post(`${API_URL}/applications`, formData);
@@ -90,7 +119,7 @@ export const submitApplication = async (formData: any) => {
   }
 };
 
-export const updateApplicationStatus = async (id: string, status: string) => {
+export const updateApplicationStatus = async (id: string, status: string): Promise<Application> => {
   try {
     // This would be a real API call in production
     // const response = await axios.put(`${API_URL}/applications/${id}/status`, { status });

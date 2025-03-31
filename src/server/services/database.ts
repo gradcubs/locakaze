@@ -105,3 +105,27 @@ export const db = {
     }
   ]
 };
+
+// Helper functions for database operations
+export const getApplicationById = (id: string) => {
+  return db.applications.find(app => app.id === id);
+};
+
+export const updateApplication = (id: string, updates: Partial<typeof db.applications[0]>) => {
+  const index = db.applications.findIndex(app => app.id === id);
+  if (index !== -1) {
+    db.applications[index] = { ...db.applications[index], ...updates };
+    return db.applications[index];
+  }
+  return null;
+};
+
+export const getUserByEmail = (email: string) => {
+  return db.users.find(user => user.email === email);
+};
+
+export const createUser = (userData: Omit<typeof db.users[0], 'id'>) => {
+  const newUser = { ...userData, id: uuidv4() };
+  db.users.push(newUser);
+  return newUser;
+};
