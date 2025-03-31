@@ -1,73 +1,108 @@
 
-import express from 'express';
-import { 
-  getAllApplications, 
-  getApplicationById, 
-  getApplicationsByEmail, 
-  createApplication, 
-  updateApplication 
-} from '../services/database';
-import { ApplicationRequest } from '../types';
+import { Router, Request, Response } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+import { db } from '../services/database';
 
-const router = express.Router();
+const router = Router();
 
 /**
  * @swagger
  * components:
  *   schemas:
- *     ApplicationData:
+ *     Application:
  *       type: object
+ *       required:
+ *         - firstName
+ *         - lastName
+ *         - email
+ *         - phone
+ *         - address
+ *         - city
+ *         - state
+ *         - zipCode
+ *         - employmentStatus
+ *         - annualIncome
+ *         - loanPurpose
+ *         - loanAmount
  *       properties:
- *         applicationId:
+ *         id:
  *           type: string
- *           description: Unique identifier for the application
+ *           description: The auto-generated id of the application
  *         firstName:
  *           type: string
+ *           description: First name of the applicant
  *         lastName:
  *           type: string
+ *           description: Last name of the applicant
  *         email:
  *           type: string
+ *           description: Email of the applicant
  *         phone:
  *           type: string
- *         dob:
- *           type: string
- *           format: date
+ *           description: Phone number of the applicant
  *         address:
  *           type: string
+ *           description: Street address of the applicant
  *         city:
  *           type: string
+ *           description: City of the applicant
  *         state:
  *           type: string
- *         zip:
+ *           description: State of the applicant
+ *         zipCode:
  *           type: string
- *         income:
+ *           description: Zip code of the applicant
+ *         employmentStatus:
  *           type: string
- *         employment:
+ *           description: Employment status of the applicant
+ *         annualIncome:
+ *           type: number
+ *           description: Annual income of the applicant
+ *         loanPurpose:
  *           type: string
- *           enum: [fullTime, partTime, selfEmployed, retired, student, unemployed]
- *         creditScore:
- *           type: string
- *           enum: [excellent, good, fair, poor, veryPoor]
+ *           description: Purpose of the loan
  *         loanAmount:
- *           type: string
- *         purpose:
- *           type: string
- *           enum: [emergency, homeImprovement, debtConsolidation, majorPurchase, education, medical, other]
+ *           type: number
+ *           description: Requested loan amount
  *         status:
  *           type: string
- *           enum: [pending, processing, approved, rejected]
- *         submittedAt:
+ *           description: Current status of the application
+ *           enum:
+ *             - pending
+ *             - approved
+ *             - rejected
+ *         createdAt:
  *           type: string
  *           format: date-time
- *         updatedAt:
- *           type: string
- *           format: date-time
- *         creditLimit:
- *           type: string
- *         interestRate:
- *           type: string
- *         accountNumber:
- *           type: string
+ *           description: The date the application was created
+ *         mlDecision:
+ *           type: object
+ *           properties:
+ *             status:
+ *               type: string
+ *               enum:
+ *                 - approved
+ *                 - rejected
+ *             interestRate:
+ *               type: number
+ *             creditLimit:
+ *               type: number
+ *         creditCheck:
+ *           type: object
+ *           properties:
+ *             creditScore:
+ *               type: number
+ *             inquiries:
+ *               type: number
+ *             utilization:
+ *               type: number
+ */
+
+/**
+ * @swagger
+ * tags:
+ *   name: Applications
+ *   description: API for managing loan applications
  */
 
 /**
@@ -78,84 +113,144 @@ const router = express.Router();
  *     tags: [Applications]
  *     responses:
  *       200:
- *         description: List of applications
+ *         description: The list of applications
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/ApplicationData'
+ *                 $ref: '#/components/schemas/Application'
  */
-router.get('/', (req, res) => {
-  const applications = getAllApplications();
-  res.json(applications);
+router.get('/', (_req: Request, res: Response) => {
+  res.json(db.applications);
 });
 
 /**
  * @swagger
  * /api/applications/{id}:
  *   get:
- *     summary: Get application by ID
+ *     summary: Get an application by id
  *     tags: [Applications]
  *     parameters:
  *       - in: path
  *         name: id
- *         required: true
  *         schema:
  *           type: string
+ *         required: true
+ *         description: The application id
  *     responses:
  *       200:
- *         description: Application details
+ *         description: The application
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/ApplicationData'
+ *               $ref: '#/components/schemas/Application'
  *       404:
  *         description: Application not found
  */
-router.get('/:id', (req, res) => {
-  const application = getApplicationById(req.params.id);
+router.get('/:id', (req: Request<{ id: string }>, res: Response) => {
+  const application = db.applications.find(app => app.id === req.params.id);
   
   if (!application) {
     return res.status(404).json({ message: 'Application not found' });
   }
   
-  res.json(application);
-});
-
-/**
- * @swagger
- * /api/applications/user/{email}:
- *   get:
- *     summary: Get applications by user email
- *     tags: [Applications]
- *     parameters:
- *       - in: path
- *         name: email
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: List of user's applications
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/ApplicationData'
- */
-router.get('/user/:email', (req, res) => {
-  const applications = getApplicationsByEmail(req.params.email);
-  res.json(applications);
+  return res.json(application);
 });
 
 /**
  * @swagger
  * /api/applications:
  *   post:
- *     summary: Submit a new application
+ *     summary: Create a new application
  *     tags: [Applications]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Application'
+ *     responses:
+ *       201:
+ *         description: The created application
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Application'
+ */
+router.post('/', (req: Request, res: Response) => {
+  const {
+    firstName,
+    lastName,
+    email,
+    phone,
+    address,
+    city,
+    state,
+    zipCode,
+    employmentStatus,
+    annualIncome,
+    loanPurpose,
+    loanAmount
+  } = req.body;
+
+  // Generate random ML decision with mostly approval
+  const approveProbability = Math.random();
+  const mlStatus = approveProbability > 0.3 ? 'approved' : 'rejected';
+  const interestRate = 5 + Math.random() * 10;
+  const creditLimit = Math.round((loanAmount * (1 + Math.random())) / 1000) * 1000;
+
+  // Generate random credit check data
+  const creditScore = Math.floor(580 + Math.random() * 300);
+  const inquiries = Math.floor(Math.random() * 8);
+  const utilization = Math.floor(Math.random() * 90);
+
+  const newApplication = {
+    id: uuidv4(),
+    firstName,
+    lastName,
+    email,
+    phone,
+    address,
+    city,
+    state,
+    zipCode,
+    employmentStatus,
+    annualIncome,
+    loanPurpose,
+    loanAmount,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+    mlDecision: {
+      status: mlStatus,
+      interestRate: parseFloat(interestRate.toFixed(2)),
+      creditLimit
+    },
+    creditCheck: {
+      creditScore,
+      inquiries,
+      utilization
+    }
+  };
+
+  db.applications.push(newApplication);
+  
+  return res.status(201).json(newApplication);
+});
+
+/**
+ * @swagger
+ * /api/applications/{id}/status:
+ *   put:
+ *     summary: Update the status of an application
+ *     tags: [Applications]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The application id
  *     requestBody:
  *       required: true
  *       content:
@@ -163,65 +258,33 @@ router.get('/user/:email', (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               personalInfo:
- *                 type: object
- *               financialInfo:
- *                 type: object
- *               verification:
- *                 type: object
- *     responses:
- *       201:
- *         description: Application created successfully
- *       400:
- *         description: Invalid application data
- */
-router.post('/', (req, res) => {
-  try {
-    const applicationData = req.body as ApplicationRequest;
-    
-    if (!applicationData.personalInfo || !applicationData.financialInfo) {
-      return res.status(400).json({ message: 'Invalid application data' });
-    }
-    
-    const newApplication = createApplication(applicationData);
-    res.status(201).json(newApplication);
-  } catch (error) {
-    res.status(400).json({ message: 'Error creating application', error });
-  }
-});
-
-/**
- * @swagger
- * /api/applications/{id}:
- *   put:
- *     summary: Update application status
- *     tags: [Applications]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
+ *               status:
+ *                 type: string
+ *                 enum:
+ *                   - pending
+ *                   - approved
+ *                   - rejected
  *     responses:
  *       200:
- *         description: Application updated successfully
+ *         description: The updated application
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Application'
  *       404:
  *         description: Application not found
  */
-router.put('/:id', (req, res) => {
-  const updatedApplication = updateApplication(req.params.id, req.body);
+router.put('/:id/status', (req: Request<{ id: string }>, res: Response) => {
+  const { status } = req.body;
+  const applicationIndex = db.applications.findIndex(app => app.id === req.params.id);
   
-  if (!updatedApplication) {
+  if (applicationIndex === -1) {
     return res.status(404).json({ message: 'Application not found' });
   }
   
-  res.json(updatedApplication);
+  db.applications[applicationIndex].status = status;
+  
+  return res.json(db.applications[applicationIndex]);
 });
 
 export default router;

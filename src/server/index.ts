@@ -1,24 +1,26 @@
 
 import express from 'express';
 import cors from 'cors';
-import bodyParser from 'body-parser';
 import morgan from 'morgan';
-import swaggerUi from 'swagger-ui-express';
+import bodyParser from 'body-parser';
 import swaggerJsDoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 
 import applicationsRoutes from './routes/applications';
 import usersRoutes from './routes/users';
 import creditRoutes from './routes/credit';
 
+// Setup Express app
 const app = express();
-const PORT = process.env.PORT || 5000;
+const port = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
 app.use(morgan('dev'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-// Swagger configuration
+// Swagger setup
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
@@ -29,12 +31,12 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://localhost:${PORT}`,
+        url: `http://localhost:${port}`,
         description: 'Development server',
       },
     ],
   },
-  apis: ['./src/server/routes/*.ts'], // Path to the API docs
+  apis: ['./src/server/routes/*.ts'],
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
@@ -45,17 +47,15 @@ app.use('/api/applications', applicationsRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/credit', creditRoutes);
 
-// Default route
-app.get('/', (req, res) => {
-  res.send('Credit Application API is running');
+// Health check
+app.get('/health', (_req, res) => {
+  res.status(200).json({ status: 'ok' });
 });
 
 // Start server
-if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Swagger documentation available at http://localhost:${PORT}/api-docs`);
-  });
-}
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+  console.log(`Swagger docs available at http://localhost:${port}/api-docs`);
+});
 
 export default app;
